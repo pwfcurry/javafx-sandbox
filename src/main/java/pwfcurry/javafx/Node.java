@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 class Node implements TreeValue {
-	
+
 	private final TableCellValue property;
 
 	@Override
@@ -16,15 +16,15 @@ class Node implements TreeValue {
 	public TableCellValue getColour() {
 		return () -> "colour";
 	}
-	
+
 	@Override
 	public TableCellValue getType() {
 		return () -> "type";
 	}
-	
+
 	@Override
 	public TableCellValue getCost() {
 		return () -> "cost";
 	}
-	
+
 }
