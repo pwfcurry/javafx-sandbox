@@ -1,9 +1,7 @@
 package pwfcurry.javafx;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static pwfcurry.javafx.Main.Utils.capitaliseEnum;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
+import static pwfcurry.javafx.Utils.compose;
 
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
@@ -20,11 +18,11 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import lombok.Data;
-import lombok.experimental.Delegate;
-import org.apache.commons.lang3.text.WordUtils;
+import pwfcurry.javafx.property.ColourProperty;
+import pwfcurry.javafx.property.CostProperty;
+import pwfcurry.javafx.property.TypeProperty;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -39,7 +37,6 @@ public class Main extends Application {
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		GridPane root = new GridPane();
-		
 		
 		StackPane tableContainer = new StackPane();
 		TreeTableView<TreeValue> treeTableView = createTable();
@@ -56,7 +53,7 @@ public class Main extends Application {
 	}
 	
 	private TreeTableView<TreeValue> createTable() {
-		TreeItem<TreeValue> root = new TreeItem<>(new TreeValue("Root", ColourProperty.ROOT, TypeProperty.ROOT, CostProperty.ROOT));
+		TreeItem<TreeValue> root = new TreeItem<>(new Node(() -> "ROOT"));
 		root.getChildren().addAll(createChildren(100));
 		
 		TreeTableView<TreeValue> tableView = new TreeTableView<>(root);
@@ -88,24 +85,27 @@ public class Main extends Application {
 	
 	private List<TreeItem<TreeValue>> createChildren(int childrenCount) {
 		List<TreeItem<TreeValue>> allTreeItems = range(1, childrenCount).stream().map(this::createTreeItem).collect(toList());
-		return group(allTreeItems, TreeValue::getColour);
+		return group(allTreeItems, compose(TreeItem::getValue, TreeValue::getColour));
 	}
 	
-	private List<TreeItem<TreeValue>> group(List<TreeItem<TreeValue>> allTreeItems, Function<TreeValue,TableCellValue> attribute) {
-		return group1(allTreeItems, TreeItem::getValue, attribute.andThen(TableCellValue::getValue));
+	private List<TreeItem<TreeValue>> group(List<TreeItem<TreeValue>> allTreeItems, Function<TreeItem<TreeValue>,TableCellValue> groupingAttribute) {
+		Map<TableCellValue,List<TreeItem<TreeValue>>> map = allTreeItems.stream().collect(
+				HashMap::new,
+				(map1, treeItem) -> map1.get(groupingAttribute.apply(treeItem)).add(treeItem),
+				(firstMap, secondMap) -> firstMap.forEach((key, value) -> value.addAll(secondMap.get(key)))
+		);
+		
+		return map.entrySet().stream().map(entry -> {
+			TableCellValue property = entry.getKey();
+			List<TreeItem<TreeValue>> treeItems = entry.getValue();
+			TreeItem<TreeValue> propertyNode = new TreeItem<>(new Node(property));
+			propertyNode.getChildren().addAll(treeItems);
+			return propertyNode;
+		}).collect(toList());
 	}
-	
-	private List<TreeItem<TreeValue>> group1(List<TreeItem<TreeValue>> allTreeItems, Function<TreeItem<TreeValue>,TreeValue> valFromItem, Function<TreeValue,String> attribute) {
-		return group2(allTreeItems, valFromItem.andThen(attribute));
-	}
-	
-	private List<TreeItem<TreeValue>> group2(List<TreeItem<TreeValue>> allTreeItems, Function<TreeItem<TreeValue>,String> attribute) {
-		Map<String,TreeItem<TreeValue>> map = allTreeItems.stream().collect(toMap(attribute::apply, Function.identity()));
-		return collect;
-	}
-	
+
 	private TreeItem<TreeValue> createTreeItem(Integer integer) {
-		return new TreeItem<>(new TreeValue("val "+ integer, random(ColourProperty.class), random(TypeProperty.class), random(CostProperty.class)));
+		return new TreeItem<>(new Leaf("val "+ integer, random(ColourProperty.class), random(TypeProperty.class), random(CostProperty.class)));
 	}
 	
 	private static <T extends Enum> T random(Class<T> clazz) {
@@ -130,103 +130,13 @@ public class Main extends Application {
 	}
 	
 	
-	@Data
-	private static class TreeValue {
-		private final String name;
-		private final ColourProperty colour;
-		private final TypeProperty type;
-		private final CostProperty cost;
-	}
-	
-	
-	private interface TableCellValue {
-		String getValue();
-	}
-	
-	
-	private enum ColourProperty implements TableCellValue {
-		
-		ROOT, WHITE, BLUE, BLACK, RED, GREEN;
-		
-		@Override
-		public String getValue() {
-			return capitaliseEnum(this);
-		}
-		
-	}
-	
-	
-	private enum TypeProperty implements TableCellValue {
-		
-		ROOT, Instant, Sorcery, Creature, Enchantment, Land;
-		
-		@Override
-		public String getValue() {
-			return capitaliseEnum(this);
-		}
-		
-	}
-	
-	
-	private enum CostProperty implements TableCellValue {
-		
-		ROOT,ONE,TWO,THREE,FOUR,FIVE;
-		
-		@Override
-		public String getValue() {
-			return capitaliseEnum(this);
-		}
-		
-	}
-	
-	
-	public static class Utils {
-		
-		public static String capitaliseEnum(Enum<?> e) {
-			return WordUtils.capitalizeFully(e.name().replace('_', ' '));
-		}
-		
-	}
-	
-	
-	// todo need to do better
-	
-	private static interface MyTreeValue {
-		String getName();
-		TableCellValue getColour();
-		TableCellValue getType();
-		TableCellValue getCost();
-	}
-	
-	private static class Node implements MyTreeValue {
-		
-		@Override
-		public String getName() {
-			return "node";
-		}
-		
-		@Override
-		public TableCellValue getColour() {
-			return () -> "colour";
-		}
-		
-		@Override
-		public TableCellValue getType() {
-			return () -> "type";
-		}
-		
-		@Override
-		public TableCellValue getCost() {
-			return () -> "cost";
-		}
-	}
-	
-	@Data
-	private static class Leaf implements MyTreeValue {
-		@Delegate
-		private final TreeValue treeValue;
-	}
-	
-	
-	
+//	@Data
+//	private static class TreeValue {
+//		private final String name;
+//		private final ColourProperty colour;
+//		private final TypeProperty type;
+//		private final CostProperty cost;
+//	}
+
+
 }
