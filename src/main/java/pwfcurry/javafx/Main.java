@@ -53,7 +53,7 @@ public class Main extends Application {
 
 	private TreeTableView<TreeValue> createTable() {
 		TreeItem<TreeValue> root = new TreeItem<>(new Node(() -> "ROOT"));
-		root.getChildren().addAll(createChildren(100));
+		root.getChildren().addAll(createChildren(1_000));
 
 		TreeTableView<TreeValue> tableView = new TreeTableView<>(root);
 
@@ -87,8 +87,8 @@ public class Main extends Application {
 		return StringConstant.valueOf(attribute.apply(cellDataFeatures.getValue().getValue()).getValue());
 	}
 
-	private List<TreeItem<TreeValue>> createChildren(int childrenCount) {
-		return group(createRandomTreeItems(childrenCount), compose(TreeItem::getValue, TreeValue::getType));
+	private List<TreeItem<TreeValue>> createChildren(int childCount) {
+		return group(createRandomTreeItems(childCount), compose(TreeItem::getValue, TreeValue::getType));
 	}
 
 	private List<TreeItem<TreeValue>> createRandomTreeItems(int childrenCount) {
@@ -111,18 +111,9 @@ public class Main extends Application {
 	{
 		return allTreeItems.stream().collect(
 				HashMap::new,
-				(map, treeItem) -> accumulate(groupingAttribute.apply(treeItem), map, treeItem),
+				(map, treeItem) -> map.computeIfAbsent(groupingAttribute.apply(treeItem), key -> new ArrayList<>()).add(treeItem),
 				(firstMap, secondMap) -> firstMap.forEach((key, value) -> value.addAll(secondMap.get(key)))
 		);
-	}
-
-	private void accumulate(
-			TableCellValue groupingAttribute,
-			HashMap<TableCellValue,List<TreeItem<TreeValue>>> map,
-			TreeItem<TreeValue> treeItem)
-	{
-		List<TreeItem<TreeValue>> mapValue = map.computeIfAbsent(groupingAttribute, key -> new ArrayList<>());
-		mapValue.add(treeItem);
 	}
 
 	private List<TreeItem<TreeValue>> createNodesForGroups(Map<TableCellValue,List<TreeItem<TreeValue>>> groups) {
