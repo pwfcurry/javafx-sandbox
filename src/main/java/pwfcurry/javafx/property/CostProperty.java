@@ -1,9 +1,9 @@
 package pwfcurry.javafx.property;
 
-import pwfcurry.javafx.TableCellValue;
+import pwfcurry.javafx.EnumTableCellValue;
 
 @SuppressWarnings("unused")
-public enum CostProperty implements TableCellValue {
+public enum CostProperty implements EnumTableCellValue {
 
 	ONE,
 	TWO,

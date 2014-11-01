@@ -2,6 +2,7 @@ package pwfcurry.javafx;
 
 import static java.util.stream.Collectors.toList;
 import static pwfcurry.javafx.Utils.compose;
+import static pwfcurry.javafx.Utils.random;
 
 import com.sun.javafx.binding.StringConstant;
 import javafx.application.Application;
@@ -19,6 +20,7 @@ import pwfcurry.javafx.property.ColourProperty;
 import pwfcurry.javafx.property.CostProperty;
 import pwfcurry.javafx.property.TypeProperty;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,28 +87,49 @@ public class Main extends Application {
 		return StringConstant.valueOf(attribute.apply(cellDataFeatures.getValue().getValue()).getValue());
 	}
 
-
 	private List<TreeItem<TreeValue>> createChildren(int childrenCount) {
-		List<TreeItem<TreeValue>> allTreeItems = Utils.range(1, childrenCount).stream().
-				map(this::createTreeItem).
-				collect(toList());
-		return group(allTreeItems, compose(TreeItem::getValue, TreeValue::getColour));
+		return group(createRandomTreeItems(childrenCount), compose(TreeItem::getValue, TreeValue::getType));
+	}
+
+	private List<TreeItem<TreeValue>> createRandomTreeItems(int childrenCount) {
+		return Utils.range(1, childrenCount).stream().
+					map(this::createTreeItem).
+					collect(toList());
 	}
 
 	private List<TreeItem<TreeValue>> group(
 			List<TreeItem<TreeValue>> allTreeItems,
 			Function<TreeItem<TreeValue>,TableCellValue> groupingAttribute)
 	{
-		Map<TableCellValue,List<TreeItem<TreeValue>>> map = allTreeItems.stream().collect(
+		Map<TableCellValue,List<TreeItem<TreeValue>>> groups = groupTreeItems(allTreeItems, groupingAttribute);
+		return createNodesForGroups(groups);
+	}
+
+	private Map<TableCellValue,List<TreeItem<TreeValue>>> groupTreeItems(
+			List<TreeItem<TreeValue>> allTreeItems,
+			Function<TreeItem<TreeValue>,TableCellValue> groupingAttribute)
+	{
+		return allTreeItems.stream().collect(
 				HashMap::new,
-				(map1, treeItem) -> map1.get(groupingAttribute.apply(treeItem)).add(treeItem),
+				(map, treeItem) -> accumulate(groupingAttribute.apply(treeItem), map, treeItem),
 				(firstMap, secondMap) -> firstMap.forEach((key, value) -> value.addAll(secondMap.get(key)))
 		);
+	}
 
-		return map.entrySet().stream().map(entry -> {
-			TableCellValue property = entry.getKey();
+	private void accumulate(
+			TableCellValue groupingAttribute,
+			HashMap<TableCellValue,List<TreeItem<TreeValue>>> map,
+			TreeItem<TreeValue> treeItem)
+	{
+		List<TreeItem<TreeValue>> mapValue = map.computeIfAbsent(groupingAttribute, key -> new ArrayList<>());
+		mapValue.add(treeItem);
+	}
+
+	private List<TreeItem<TreeValue>> createNodesForGroups(Map<TableCellValue,List<TreeItem<TreeValue>>> groups) {
+		return groups.entrySet().stream().map(entry -> {
+			TableCellValue groupingProperty = entry.getKey();
 			List<TreeItem<TreeValue>> treeItems = entry.getValue();
-			TreeItem<TreeValue> propertyNode = new TreeItem<>(new Node(property));
+			TreeItem<TreeValue> propertyNode = new TreeItem<>(new Node(groupingProperty));
 			propertyNode.getChildren().addAll(treeItems);
 			return propertyNode;
 		}).collect(toList());
@@ -115,9 +138,10 @@ public class Main extends Application {
 	private TreeItem<TreeValue> createTreeItem(Integer integer) {
 		return new TreeItem<>(new Leaf(
 				"val " + integer,
-				Utils.random(ColourProperty.class),
-				Utils.random(TypeProperty.class),
-				Utils.random(CostProperty.class)));
+				random(ColourProperty.class),
+				random(TypeProperty.class),
+				random(CostProperty.class)
+		));
 	}
 
 }

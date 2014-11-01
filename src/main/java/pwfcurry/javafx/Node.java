@@ -14,17 +14,17 @@ class Node implements TreeValue {
 
 	@Override
 	public TableCellValue getColour() {
-		return () -> "colour";
+		return () -> "";
 	}
 
 	@Override
 	public TableCellValue getType() {
-		return () -> "type";
+		return () -> "";
 	}
 
 	@Override
 	public TableCellValue getCost() {
-		return () -> "cost";
+		return () -> "";
 	}
 
 }

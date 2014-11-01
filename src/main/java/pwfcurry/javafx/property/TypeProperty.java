@@ -1,14 +1,14 @@
 package pwfcurry.javafx.property;
 
-import pwfcurry.javafx.TableCellValue;
+import pwfcurry.javafx.EnumTableCellValue;
 
 @SuppressWarnings("unused")
-public enum TypeProperty implements TableCellValue {
+public enum TypeProperty implements EnumTableCellValue {
 
-	Instant,
-	Sorcery,
-	Creature,
-	Enchantment,
-	Land
+	INSTANT,
+	SORCERY,
+	CREATURE,
+	ENCHANTMENT,
+	LAND
 
 }

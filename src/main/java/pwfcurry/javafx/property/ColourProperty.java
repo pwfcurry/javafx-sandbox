@@ -1,9 +1,9 @@
 package pwfcurry.javafx.property;
 
-import pwfcurry.javafx.TableCellValue;
+import pwfcurry.javafx.EnumTableCellValue;
 
 @SuppressWarnings("unused")
-public enum ColourProperty implements TableCellValue {
+public enum ColourProperty implements EnumTableCellValue {
 
 	WHITE,
 	BLUE,

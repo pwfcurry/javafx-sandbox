@@ -1,9 +1,10 @@
 package pwfcurry.javafx;
 
+import static org.apache.commons.lang3.text.WordUtils.capitalizeFully;
+
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
-import org.apache.commons.lang3.text.WordUtils;
 
 import java.util.Random;
 import java.util.function.Function;
@@ -11,7 +12,7 @@ import java.util.function.Function;
 public interface Utils {
 
 	public static String capitaliseEnum(Enum<?> e) {
-		return WordUtils.capitalizeFully(e.name().replace('_', ' '));
+		return capitalizeFully(e.name().replace('_', ' '));
 	}
 
 	public static <A, B, C> Function<A,C> compose(Function<A,B> first, Function<B,C> second) {
