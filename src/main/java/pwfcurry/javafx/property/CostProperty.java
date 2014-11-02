@@ -1,12 +1,22 @@
 package pwfcurry.javafx.property;
 
-@SuppressWarnings("unused")
-public enum CostProperty implements EnumTableCellValue {
+import lombok.RequiredArgsConstructor;
 
-	ONE,
-	TWO,
-	THREE,
-	FOUR,
-	FIVE
+@SuppressWarnings("unused")
+@RequiredArgsConstructor
+public enum CostProperty implements TableCellValue {
+
+	ONE(1),
+	TWO(2),
+	THREE(3),
+	FOUR(4),
+	FIVE(5);
+
+	private final Integer value;
+	
+	@Override
+	public String getValue() {
+		return value.toString();
+	}
 
 }

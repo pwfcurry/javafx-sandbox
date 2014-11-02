@@ -31,5 +31,5 @@ public interface Utils {
 		T[] enumConstants = clazz.getEnumConstants();
 		return enumConstants[new Random().nextInt(enumConstants.length)];
 	}
-	
+
 }
