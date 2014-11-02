@@ -1,6 +1,6 @@
 package pwfcurry.javafx.property;
 
-public interface TableCellValue {
+public interface Value {
 
 	String getValue();
 

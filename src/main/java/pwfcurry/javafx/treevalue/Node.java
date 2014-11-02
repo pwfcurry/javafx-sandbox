@@ -1,12 +1,12 @@
 package pwfcurry.javafx.treevalue;
 
 import lombok.Data;
-import pwfcurry.javafx.property.TableCellValue;
+import pwfcurry.javafx.property.Value;
 
 @Data
 public class Node implements TreeValue {
 
-	private final TableCellValue property;
+	private final Value property;
 
 	@Override
 	public String getName() {
@@ -14,17 +14,17 @@ public class Node implements TreeValue {
 	}
 
 	@Override
-	public TableCellValue getColour() {
+	public Value getColour() {
 		return () -> "";
 	}
 
 	@Override
-	public TableCellValue getType() {
+	public Value getType() {
 		return () -> "";
 	}
 
 	@Override
-	public TableCellValue getCost() {
+	public Value getCost() {
 		return () -> "";
 	}
 

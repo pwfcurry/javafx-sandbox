@@ -1,15 +1,15 @@
 package pwfcurry.javafx.treevalue;
 
-import pwfcurry.javafx.property.TableCellValue;
+import pwfcurry.javafx.property.Value;
 
 public interface TreeValue {
 
 	String getName();
 
-	TableCellValue getColour();
+	Value getColour();
 
-	TableCellValue getType();
+	Value getType();
 
-	TableCellValue getCost();
+	Value getCost();
 
 }

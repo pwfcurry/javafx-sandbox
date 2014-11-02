@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 
 @SuppressWarnings("unused")
 @RequiredArgsConstructor
-public enum CostProperty implements TableCellValue {
+public enum CostProperty implements Value {
 
 	ONE(1),
 	TWO(2),
