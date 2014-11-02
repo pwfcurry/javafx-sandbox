@@ -15,6 +15,10 @@ public interface Utils {
 		return capitalizeFully(e.name().replace('_', ' '));
 	}
 
+	public static <A,B> Function<A,B> f(Function<A,B> f) {
+		return f;
+	}
+	
 	public static <A, B, C> Function<A,C> compose(Function<A,B> first, Function<B,C> second) {
 		return first.andThen(second);
 	}

@@ -11,16 +11,19 @@ import javafx.scene.control.TreeTableColumn.CellDataFeatures;
 import javafx.scene.control.TreeTableView;
 import pwfcurry.javafx.property.ColourProperty;
 import pwfcurry.javafx.property.CostProperty;
+import pwfcurry.javafx.property.GroupingProperty;
 import pwfcurry.javafx.property.TableCellValue;
 import pwfcurry.javafx.property.TypeProperty;
-import pwfcurry.javafx.treetable.Leaf;
-import pwfcurry.javafx.treetable.Node;
-import pwfcurry.javafx.treetable.TreeValue;
+import pwfcurry.javafx.treevalue.Leaf;
+import pwfcurry.javafx.treevalue.Node;
+import pwfcurry.javafx.treevalue.TreeValue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public class GroupingTable extends TreeTableView<TreeValue> {
@@ -41,8 +44,7 @@ public class GroupingTable extends TreeTableView<TreeValue> {
 	private void setupTable() {
 		TreeItem<TreeValue> root = new TreeItem<>(new Node(() -> "ROOT"));
 		root.getChildren().addAll(createChildren(100));
-
-		this.setRoot(root);
+		setRoot(root);
 
 		TreeTableColumn<TreeValue,String> nameColumn = new TreeTableColumn<>("Name");
 		nameColumn.setCellValueFactory(
@@ -59,7 +61,7 @@ public class GroupingTable extends TreeTableView<TreeValue> {
 
 	private TreeTableColumn<TreeValue,String> createAttributeColumn(
 			String name,
-			Function<TreeValue,TableCellValue> attribute)
+			GroupingProperty attribute)
 	{
 		TreeTableColumn<TreeValue,String> valueColumn = new TreeTableColumn<>(name);
 		valueColumn.setPrefWidth(85);
@@ -69,42 +71,63 @@ public class GroupingTable extends TreeTableView<TreeValue> {
 
 	private StringConstant getStringConstant(
 			CellDataFeatures<TreeValue,String> cellDataFeatures,
-			Function<TreeValue,TableCellValue> attribute)
+			GroupingProperty attribute)
 	{
 		return StringConstant.valueOf(attribute.apply(cellDataFeatures.getValue().getValue()).getValue());
 	}
 
 	private List<TreeItem<TreeValue>> createChildren(int childCount) {
-		return group(createRandomTreeItems(childCount), compose(TreeItem::getValue, TreeValue::getType));
-	}
+		List<GroupingProperty> groupingProperties = Arrays.asList(
+				TreeValue::getType,
+				TreeValue::getCost,
+				TreeValue::getColour
+		);
 
+		GroupingProperty firstProperty = groupingProperties.remove(0);
+
+		return group(
+				createRandomTreeItems(childCount),
+				firstProperty,
+				groupingProperties
+		);
+	}
+	
 	private List<TreeItem<TreeValue>> createRandomTreeItems(int childrenCount) {
 		return Utils.range(1, childrenCount).stream().
 				map(GroupingTable::createTreeItem).
 				collect(toList());
 	}
-
+	
 	private List<TreeItem<TreeValue>> group(
-			List<TreeItem<TreeValue>> allTreeItems,
-			Function<TreeItem<TreeValue>,TableCellValue> groupingAttribute)
+			List<TreeItem<TreeValue>> list,
+			GroupingProperty groupingProperty,
+			List<GroupingProperty> remainingGroupingProperties)
 	{
-		Map<TableCellValue,List<TreeItem<TreeValue>>> groups = groupTreeItems(allTreeItems, groupingAttribute);
-		return createNodesForGroups(groups);
+		Map<TableCellValue,List<TreeItem<TreeValue>>> grouped = groupTreeItems(list, groupingProperty);
+		grouped.forEach((tableCellValue, treeItems) -> {
+//			group(treeItems, PROPERTY, remainingProperties)
+		});
+	}
+	
+	private Map<TableCellValue,List<TreeItem<TreeValue>>> groupTreeItems(
+			List<TreeItem<TreeValue>> list,
+			GroupingProperty groupingProperty)
+	{
+		return groupByFunction(list, compose(TreeItem::getValue, groupingProperty));
 	}
 
-	private Map<TableCellValue,List<TreeItem<TreeValue>>> groupTreeItems(
-			List<TreeItem<TreeValue>> allTreeItems,
-			Function<TreeItem<TreeValue>,TableCellValue> groupingAttribute)
-	{
-		return allTreeItems.stream().collect(
+	private static <B,A> Map<B,List<A>> groupByFunction(List<A> list, Function<A,B> groupingFunction) {
+		return list.stream().collect(
 				HashMap::new,
-				(map, treeItem) ->
-						map.computeIfAbsent(groupingAttribute.apply(treeItem), key -> new ArrayList<>()).add(treeItem),
+				(map, item) -> map.computeIfAbsent(groupingFunction.apply(item), key -> new ArrayList<>()).add(item),
 				(firstMap, secondMap) -> firstMap.forEach((key, value) -> value.addAll(secondMap.get(key)))
 		);
 	}
-
-	private List<TreeItem<TreeValue>> createNodesForGroups(Map<TableCellValue,List<TreeItem<TreeValue>>> groups) {
+	
+	private List<TreeItem<TreeValue>> createNodesForGroups(
+			Map<TableCellValue,List<TreeItem<TreeValue>>> groups,
+			List<GroupingProperty> remainingGroupingProperties)
+	{
 		return groups.entrySet().stream().map(entry -> {
 			TableCellValue groupingProperty = entry.getKey();
 			List<TreeItem<TreeValue>> treeItems = entry.getValue();
@@ -113,4 +136,5 @@ public class GroupingTable extends TreeTableView<TreeValue> {
 			return propertyNode;
 		}).collect(toList());
 	}
+	
 }

@@ -1,4 +1,4 @@
-package pwfcurry.javafx.treetable;
+package pwfcurry.javafx.treevalue;
 
 import lombok.Data;
 import pwfcurry.javafx.property.ColourProperty;

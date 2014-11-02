@@ -1,4 +1,4 @@
-package pwfcurry.javafx.treetable;
+package pwfcurry.javafx.treevalue;
 
 import pwfcurry.javafx.property.TableCellValue;
 
