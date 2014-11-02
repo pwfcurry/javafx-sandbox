@@ -6,6 +6,8 @@ import static pwfcurry.javafx.Utils.random;
 
 import com.sun.javafx.binding.StringConstant;
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
@@ -14,11 +16,16 @@ import javafx.scene.control.TreeTableColumn.CellDataFeatures;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBoxBuilder;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import pwfcurry.javafx.property.ColourProperty;
 import pwfcurry.javafx.property.CostProperty;
+import pwfcurry.javafx.property.TableCellValue;
 import pwfcurry.javafx.property.TypeProperty;
+import pwfcurry.javafx.treetable.Leaf;
+import pwfcurry.javafx.treetable.Node;
+import pwfcurry.javafx.treetable.TreeValue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,26 +41,36 @@ public class Main extends Application {
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		GridPane root = new GridPane();
+		GridPane gridPane = new GridPane();
 
-		StackPane tableContainer = new StackPane();
 		TreeTableView<TreeValue> treeTableView = createTable();
-		tableContainer.getChildren().add(treeTableView);
+		StackPane tableContainer = new StackPane(treeTableView);
 
 		Label label = new Label("Expanded row count...");
 		label.addEventHandler(MouseEvent.MOUSE_CLICKED,
 				event -> label.setText("Expanded row count: " + treeTableView.getExpandedItemCount()));
 
-		root.add(label, 0, 0);
-		root.add(tableContainer, 0, 2);
-		Scene scene = new Scene(root);
+		gridPane.add(label, 0, 0);
+		gridPane.add(tableContainer, 0, 2);
+		
+		Scene scene = new Scene(gridPane);
 		primaryStage.setScene(scene);
+		
+		scene.widthProperty().addListener((observable, oldValue, newValue) -> {
+				gridPane.setPrefWidth(((double)newValue));
+				tableContainer.setPrefWidth((double)newValue);
+		});
+		scene.heightProperty().addListener((observable, oldValue, newValue) -> {
+			gridPane.setPrefHeight((double)newValue);
+			tableContainer.setPrefHeight(((double)newValue)-label.getHeight());
+		});
+		
 		primaryStage.show();
 	}
 
 	private TreeTableView<TreeValue> createTable() {
 		TreeItem<TreeValue> root = new TreeItem<>(new Node(() -> "ROOT"));
-		root.getChildren().addAll(createChildren(1_000));
+		root.getChildren().addAll(createChildren(100));
 
 		TreeTableView<TreeValue> tableView = new TreeTableView<>(root);
 
@@ -93,8 +110,17 @@ public class Main extends Application {
 
 	private List<TreeItem<TreeValue>> createRandomTreeItems(int childrenCount) {
 		return Utils.range(1, childrenCount).stream().
-					map(this::createTreeItem).
+					map(Main::createTreeItem).
 					collect(toList());
+	}
+
+	private static TreeItem<TreeValue> createTreeItem(Integer integer) {
+		return new TreeItem<>(new Leaf(
+				"val " + integer,
+				random(ColourProperty.class),
+				random(TypeProperty.class),
+				random(CostProperty.class)
+		));
 	}
 
 	private List<TreeItem<TreeValue>> group(
@@ -124,15 +150,6 @@ public class Main extends Application {
 			propertyNode.getChildren().addAll(treeItems);
 			return propertyNode;
 		}).collect(toList());
-	}
-
-	private TreeItem<TreeValue> createTreeItem(Integer integer) {
-		return new TreeItem<>(new Leaf(
-				"val " + integer,
-				random(ColourProperty.class),
-				random(TypeProperty.class),
-				random(CostProperty.class)
-		));
 	}
 
 }

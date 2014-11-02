@@ -1,4 +1,4 @@
-package pwfcurry.javafx;
+package pwfcurry.javafx.property;
 
 public interface TableCellValue {
 

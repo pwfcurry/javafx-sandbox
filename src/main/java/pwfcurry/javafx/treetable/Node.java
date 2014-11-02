@@ -1,9 +1,10 @@
-package pwfcurry.javafx;
+package pwfcurry.javafx.treetable;
 
 import lombok.Data;
+import pwfcurry.javafx.property.TableCellValue;
 
 @Data
-class Node implements TreeValue {
+public class Node implements TreeValue {
 
 	private final TableCellValue property;
 
