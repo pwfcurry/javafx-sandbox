@@ -61,29 +61,9 @@ public class GroupingTable extends TreeTableView<TreeValue> {
 	}
 
 	private List<TreeItem<TreeValue>> createChildren(int childCount) {
-		List<GroupingProperty> groupingProperties = Lists.newArrayList(GroupingProperty.values());
-		GroupingProperty firstProperty = groupingProperties.remove(0);
-
+		List<GroupingProperty> groupingProperties = Lists.newArrayList(GroupingProperty.COLOUR, GroupingProperty.TYPE);
 		List<TreeValue> leaves = createRandomLeaves(childCount);
-		return group(leaves, firstProperty, groupingProperties);
-	}
-
-	private static List<TreeItem<TreeValue>> group(
-			List<TreeValue> leaves,
-			GroupingProperty groupingProperty,
-			List<GroupingProperty> groupingProperties)
-	{
-		Map<Value,List<TreeValue>> groupedLeaves = groupTreeItems(leaves, groupingProperty);
-		List<TreeItem<TreeValue>> treeNodes = new ArrayList<>();
-		groupedLeaves.entrySet().forEach(valueListEntry -> {
-			Value value = valueListEntry.getKey();
-			List<TreeValue> treeValues1 = valueListEntry.getValue();
-			Node node = new Node(value);
-			TreeItem<TreeValue> treeNode = new TreeItem<>(node);
-			treeNode.getChildren().addAll(createChildren(treeValues1, new ArrayList<>(groupingProperties)));
-			treeNodes.add(treeNode);
-		});
-		return treeNodes;
+		return createChildren(leaves, groupingProperties);
 	}
 
 	private static List<TreeItem<TreeValue>> createChildren(
@@ -91,22 +71,32 @@ public class GroupingTable extends TreeTableView<TreeValue> {
 			List<GroupingProperty> remaining)
 	{
 		if (remaining.isEmpty()) {
-			return treeValues.stream().map(TreeItem::new).collect(toList());
+			return createLeaves(treeValues);
 		}
 		else {
 			GroupingProperty groupingProperty = remaining.remove(0);
 			Map<Value,List<TreeValue>> groupedLeaves = groupTreeItems(treeValues, groupingProperty);
-			List<TreeItem<TreeValue>> treeNodes = new ArrayList<>();
-			groupedLeaves.forEach((value, treeValues1) -> {
-				Node node = new Node(value);
-				TreeItem<TreeValue> treeNode = new TreeItem<>(node);
-				treeNode.getChildren().addAll(createChildren(treeValues1, new ArrayList<>(remaining)));
-				treeNodes.add(treeNode);
-			});
-			return treeNodes;
+			return createNodes(groupedLeaves, remaining);
 		}
 	}
 
+	private static List<TreeItem<TreeValue>> createNodes(
+			Map<Value,List<TreeValue>> groupedLeaves,
+			List<GroupingProperty> remaining)
+	{
+		List<TreeItem<TreeValue>> treeNodes = new ArrayList<>();
+		groupedLeaves.forEach((value, treeValues) -> {
+			Node node = new Node(value);
+			TreeItem<TreeValue> treeNode = new TreeItem<>(node);
+			treeNode.getChildren().addAll(createChildren(treeValues, new ArrayList<>(remaining)));
+			treeNodes.add(treeNode);
+		});
+		return treeNodes;
+	}
+
+	private static List<TreeItem<TreeValue>> createLeaves(List<TreeValue> treeValues) {
+		return treeValues.stream().map(TreeItem::new).collect(toList());
+	}
 
 	private List<TreeValue> createRandomLeaves(int childrenCount) {
 		return Utils.range(1, childrenCount).stream().
@@ -114,10 +104,7 @@ public class GroupingTable extends TreeTableView<TreeValue> {
 				collect(toList());
 	}
 
-	private static Map<Value,List<TreeValue>> groupTreeItems(
-			List<TreeValue> list,
-			GroupingProperty groupingProperty)
-	{
+	private static Map<Value,List<TreeValue>> groupTreeItems(List<TreeValue> list, GroupingProperty groupingProperty) {
 		return groupByFunction(groupingProperty.getGroupingFunction(), list);
 	}
 

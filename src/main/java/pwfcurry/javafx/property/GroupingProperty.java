@@ -8,9 +8,9 @@ public enum GroupingProperty implements EnumValue {
 	
 	COLOUR(TreeValue::getColour),
 	
-	TYPE(TreeValue::getType);
+	TYPE(TreeValue::getType),
 	
-//	COST(TreeValue::getCost);
+	COST(TreeValue::getCost);
 	
 	
 	private final GroupingFunction groupingFunction;
