@@ -64,8 +64,12 @@ public class GroupingTable extends TreeTableView<TreeValue> {
 	}
 
 	private static Leaf createLeaf(Integer integer) {
+		return createLeaf("val " + integer);
+	}
+	
+	public static Leaf createLeaf(String name) {
 		return new Leaf(
-				"val " + integer,
+				name,
 				random(ColourProperty.class),
 				random(TypeProperty.class),
 				random(CostProperty.class));
