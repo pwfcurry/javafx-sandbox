@@ -12,30 +12,21 @@ import pwfcurry.javafx.property.ColourProperty;
 import pwfcurry.javafx.property.CostProperty;
 import pwfcurry.javafx.property.GroupingProperty;
 import pwfcurry.javafx.property.TypeProperty;
-import pwfcurry.javafx.property.Value;
 import pwfcurry.javafx.treevalue.Leaf;
 import pwfcurry.javafx.treevalue.Node;
 import pwfcurry.javafx.treevalue.TreeValue;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class GroupingTable extends TreeTableView<TreeValue> {
 
+	private final Grouper grouper;
+	
 	public GroupingTable() {
+		grouper = new Grouper();
 		setupTable();
-	}
-
-	private static Leaf createLeaf(Integer integer) {
-		return new Leaf(
-				"val " + integer,
-				random(ColourProperty.class),
-				random(TypeProperty.class),
-				random(CostProperty.class));
 	}
 
 	private void setupTable() {
@@ -63,39 +54,7 @@ public class GroupingTable extends TreeTableView<TreeValue> {
 	private List<TreeItem<TreeValue>> createChildren(int childCount) {
 		List<GroupingProperty> groupingProperties = Lists.newArrayList(GroupingProperty.COLOUR, GroupingProperty.TYPE);
 		List<TreeValue> leaves = createRandomLeaves(childCount);
-		return createChildren(leaves, groupingProperties);
-	}
-
-	private static List<TreeItem<TreeValue>> createChildren(
-			List<TreeValue> treeValues,
-			List<GroupingProperty> remaining)
-	{
-		if (remaining.isEmpty()) {
-			return createLeaves(treeValues);
-		}
-		else {
-			GroupingProperty groupingProperty = remaining.remove(0);
-			Map<Value,List<TreeValue>> groupedLeaves = groupTreeItems(treeValues, groupingProperty);
-			return createNodes(groupedLeaves, remaining);
-		}
-	}
-
-	private static List<TreeItem<TreeValue>> createNodes(
-			Map<Value,List<TreeValue>> groupedLeaves,
-			List<GroupingProperty> remaining)
-	{
-		List<TreeItem<TreeValue>> treeNodes = new ArrayList<>();
-		groupedLeaves.forEach((value, treeValues) -> {
-			Node node = new Node(value);
-			TreeItem<TreeValue> treeNode = new TreeItem<>(node);
-			treeNode.getChildren().addAll(createChildren(treeValues, new ArrayList<>(remaining)));
-			treeNodes.add(treeNode);
-		});
-		return treeNodes;
-	}
-
-	private static List<TreeItem<TreeValue>> createLeaves(List<TreeValue> treeValues) {
-		return treeValues.stream().map(TreeItem::new).collect(toList());
+		return grouper.group(leaves, groupingProperties);
 	}
 
 	private List<TreeValue> createRandomLeaves(int childrenCount) {
@@ -104,16 +63,12 @@ public class GroupingTable extends TreeTableView<TreeValue> {
 				collect(toList());
 	}
 
-	private static Map<Value,List<TreeValue>> groupTreeItems(List<TreeValue> list, GroupingProperty groupingProperty) {
-		return groupByFunction(groupingProperty.getGroupingFunction(), list);
-	}
-
-	private static <A, B> Map<A,List<B>> groupByFunction(Function<B,A> groupingFunction, List<B> list) {
-		return list.stream().collect(
-				HashMap::new,
-				(map, item) -> map.computeIfAbsent(groupingFunction.apply(item), key -> new ArrayList<>()).add(item),
-				(firstMap, secondMap) -> firstMap.forEach((key, value) -> value.addAll(secondMap.get(key)))
-		);
+	private static Leaf createLeaf(Integer integer) {
+		return new Leaf(
+				"val " + integer,
+				random(ColourProperty.class),
+				random(TypeProperty.class),
+				random(CostProperty.class));
 	}
 
 }
