@@ -1,11 +1,11 @@
 package pwfcurry.javafx.property;
 
-import pwfcurry.javafx.Utils;
+import static pwfcurry.javafx.Utils.capitaliseEnum;
 
 public interface EnumValue extends Value {
 
 	default String getValue() {
-		return Utils.capitaliseEnum((Enum)this);
+		return capitaliseEnum((Enum)this);
 	}
 
 }

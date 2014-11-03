@@ -1,26 +1,23 @@
 package pwfcurry.javafx;
 
 import static java.util.stream.Collectors.toList;
-import static pwfcurry.javafx.Utils.compose;
 import static pwfcurry.javafx.Utils.random;
 
+import com.google.common.collect.Lists;
 import com.sun.javafx.binding.StringConstant;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
-import javafx.scene.control.TreeTableColumn.CellDataFeatures;
 import javafx.scene.control.TreeTableView;
 import pwfcurry.javafx.property.ColourProperty;
 import pwfcurry.javafx.property.CostProperty;
-import pwfcurry.javafx.property.GroupingFunction;
 import pwfcurry.javafx.property.GroupingProperty;
-import pwfcurry.javafx.property.Value;
 import pwfcurry.javafx.property.TypeProperty;
+import pwfcurry.javafx.property.Value;
 import pwfcurry.javafx.treevalue.Leaf;
 import pwfcurry.javafx.treevalue.Node;
 import pwfcurry.javafx.treevalue.TreeValue;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,13 +30,12 @@ public class GroupingTable extends TreeTableView<TreeValue> {
 		setupTable();
 	}
 
-	private static TreeItem<TreeValue> createTreeItem(Integer integer) {
-		return new TreeItem<>(new Leaf(
+	private static Leaf createLeaf(Integer integer) {
+		return new Leaf(
 				"val " + integer,
 				random(ColourProperty.class),
 				random(TypeProperty.class),
-				random(CostProperty.class)
-		));
+				random(CostProperty.class));
 	}
 
 	private void setupTable() {
@@ -65,60 +61,72 @@ public class GroupingTable extends TreeTableView<TreeValue> {
 	}
 
 	private List<TreeItem<TreeValue>> createChildren(int childCount) {
-		List<GroupingProperty> groupingProperties = Arrays.asList(GroupingProperty.values());
+		List<GroupingProperty> groupingProperties = Lists.newArrayList(GroupingProperty.values());
 		GroupingProperty firstProperty = groupingProperties.remove(0);
-		return group(
-				createRandomTreeItems(childCount),
-				firstProperty,
-				groupingProperties
-		);
-	}
-	
-	private List<TreeItem<TreeValue>> createRandomTreeItems(int childrenCount) {
-		return Utils.range(1, childrenCount).stream().
-				map(GroupingTable::createTreeItem).
-				collect(toList());
-	}
-	
-	// TODO recursive
-	private List<TreeItem<TreeValue>> group(
-			List<TreeItem<TreeValue>> list,
-			GroupingProperty groupingProperty,
-			List<GroupingProperty> remainingGroupingProperties)
-	{
-		Map<Value,List<TreeItem<TreeValue>>> grouped = groupTreeItems(list, groupingProperty);
-		grouped.forEach((value, treeItems) -> {
-			group(treeItems, PROPERTY, remainingProperties)
-		});
-		return null;
-	}
-	
-	private Map<Value,List<TreeItem<TreeValue>>> groupTreeItems(
-			List<TreeItem<TreeValue>> list,
-			GroupingProperty groupingProperty)
-	{
-		return groupByFunction(list, compose(TreeItem::getValue, groupingProperty.getGroupingFunction()));
+
+		List<TreeValue> leaves = createRandomLeaves(childCount);
+		return group(leaves, firstProperty, groupingProperties);
 	}
 
-	private static <B,A> Map<B,List<A>> groupByFunction(List<A> list, Function<A,B> groupingFunction) {
+	private static List<TreeItem<TreeValue>> group(
+			List<TreeValue> leaves,
+			GroupingProperty groupingProperty,
+			List<GroupingProperty> groupingProperties)
+	{
+		Map<Value,List<TreeValue>> groupedLeaves = groupTreeItems(leaves, groupingProperty);
+		List<TreeItem<TreeValue>> treeNodes = new ArrayList<>();
+		groupedLeaves.entrySet().forEach(valueListEntry -> {
+			Value value = valueListEntry.getKey();
+			List<TreeValue> treeValues1 = valueListEntry.getValue();
+			Node node = new Node(value);
+			TreeItem<TreeValue> treeNode = new TreeItem<>(node);
+			treeNode.getChildren().addAll(createChildren(treeValues1, new ArrayList<>(groupingProperties)));
+			treeNodes.add(treeNode);
+		});
+		return treeNodes;
+	}
+
+	private static List<TreeItem<TreeValue>> createChildren(
+			List<TreeValue> treeValues,
+			List<GroupingProperty> remaining)
+	{
+		if (remaining.isEmpty()) {
+			return treeValues.stream().map(TreeItem::new).collect(toList());
+		}
+		else {
+			GroupingProperty groupingProperty = remaining.remove(0);
+			Map<Value,List<TreeValue>> groupedLeaves = groupTreeItems(treeValues, groupingProperty);
+			List<TreeItem<TreeValue>> treeNodes = new ArrayList<>();
+			groupedLeaves.forEach((value, treeValues1) -> {
+				Node node = new Node(value);
+				TreeItem<TreeValue> treeNode = new TreeItem<>(node);
+				treeNode.getChildren().addAll(createChildren(treeValues1, new ArrayList<>(remaining)));
+				treeNodes.add(treeNode);
+			});
+			return treeNodes;
+		}
+	}
+
+
+	private List<TreeValue> createRandomLeaves(int childrenCount) {
+		return Utils.range(1, childrenCount).stream().
+				map(GroupingTable::createLeaf).
+				collect(toList());
+	}
+
+	private static Map<Value,List<TreeValue>> groupTreeItems(
+			List<TreeValue> list,
+			GroupingProperty groupingProperty)
+	{
+		return groupByFunction(groupingProperty.getGroupingFunction(), list);
+	}
+
+	private static <A, B> Map<A,List<B>> groupByFunction(Function<B,A> groupingFunction, List<B> list) {
 		return list.stream().collect(
 				HashMap::new,
 				(map, item) -> map.computeIfAbsent(groupingFunction.apply(item), key -> new ArrayList<>()).add(item),
 				(firstMap, secondMap) -> firstMap.forEach((key, value) -> value.addAll(secondMap.get(key)))
 		);
 	}
-	
-	private List<TreeItem<TreeValue>> createNodesForGroups(
-			Map<Value,List<TreeItem<TreeValue>>> groups,
-			List<GroupingFunction> remainingGroupingProperties)
-	{
-		return groups.entrySet().stream().map(entry -> {
-			Value groupingProperty = entry.getKey();
-			List<TreeItem<TreeValue>> treeItems = entry.getValue();
-			TreeItem<TreeValue> propertyNode = new TreeItem<>(new Node(groupingProperty));
-			propertyNode.getChildren().addAll(treeItems);
-			return propertyNode;
-		}).collect(toList());
-	}
-	
+
 }

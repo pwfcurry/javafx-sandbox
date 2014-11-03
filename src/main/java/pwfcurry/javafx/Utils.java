@@ -15,7 +15,7 @@ public interface Utils {
 		return capitalizeFully(e.name().replace('_', ' '));
 	}
 
-	public static <A,B> Function<A,B> f(Function<A,B> f) {
+	public static <A,B> Function<A,B> $(Function<A,B> f) {
 		return f;
 	}
 	
