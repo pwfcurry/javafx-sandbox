@@ -16,7 +16,6 @@ import pwfcurry.javafx.treevalue.Leaf;
 import pwfcurry.javafx.treevalue.Node;
 import pwfcurry.javafx.treevalue.TreeValue;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
